@@ -9,6 +9,7 @@ import {
 } from "discord.js";
 
 import { internalState } from "../core/brain.js";
+import { logger } from "../utils/logger.js";
 
 type SendableChannel =
   | GuildTextBasedChannel
@@ -35,12 +36,20 @@ export async function showTyping(
 
   const interval = 8000;
 
-  channel.sendTyping();
+  const sendTypingSafely = async () => {
+    try {
+      await channel.sendTyping();
+    } catch (error) {
+      logger.warn("Typing indicator failed (non-critical):", error);
+    }
+  };
+
+  await sendTypingSafely();
 
   const pulses = Math.ceil(durationMs / interval);
 
   for (let i = 1; i < pulses; i++) {
     await new Promise(res => setTimeout(res, interval));
-    channel.sendTyping();
+    await sendTypingSafely();
   }
 }
